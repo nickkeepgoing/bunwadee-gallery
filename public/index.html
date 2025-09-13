@@ -139,7 +139,8 @@ searchInput.addEventListener('input', async () => {
 
       picDiv.innerHTML = `  
           <img src="${file.url}" alt="${file.filename}">  
-          <div class="overlay">  
+          <div class="overlay"> 
+            <p width="50%" style="color:white">${file.filename}</p>
             <button class="btn btn-danger" onclick="deleteImage('${file.filename}')">ลบ</button>  
             <a href="${file.url}" download class="btn">ดาวน์โหลด</a>  
           </div>  
