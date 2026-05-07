@@ -6,7 +6,7 @@
 ---
 
 ## 🌐 เว็บไซต์  
-🔗 [bunwadee-gallery.onrender.com](<img width="399" height="370" alt="Screenshot 2026-05-07 113307" src="https://github.com/user-attachments/assets/0c8bf1ce-b221-4634-96a6-042058616785" />)  
+🔗 [love-gallery.com](https://github.com/nick3rson/bunwadee-gallery)
 
 ---
 
@@ -20,7 +20,9 @@
 
 ## 📸 Screenshot / รูปตัวอย่าง  
 
-![1000030374](https://github.com/user-attachments/assets/f1f6d07a-436d-40df-97f1-4d18fd526eff)  ![Uploading Screenshot 2026-05-07 113307.png…]()
+![1000030374](https://github.com/user-attachments/assets/f1f6d07a-436d-40df-97f1-4d18fd526eff)
+<img width="399" height="370" alt="Screenshot 2026-05-07 113307" src="https://github.com/user-attachments/assets/a8af307f-7865-491b-a577-6eb33a3df197" />
+
 
 
 ---
