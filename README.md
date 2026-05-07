@@ -21,7 +21,6 @@
 ## 📸 Screenshot / รูปตัวอย่าง  
 <p align="center">
   <img src="https://github.com/user-attachments/assets/24db19eb-93c6-4c06-845c-7e7bec23c3b2" alt="Screenshot 1" width="250"/>
-  <img src="https://github.com/user-attachments/assets/4bfdd957-d927-47ff-9d02-4a8de6cd977b" alt="Screenshot 2" width="350"/>
 </p>  
 
 ![1000030374](https://github.com/user-attachments/assets/f1f6d07a-436d-40df-97f1-4d18fd526eff)  
