@@ -17,12 +17,16 @@ const APP_USERNAME = process.env.APP_USERNAME;
 const APP_PASSWORD_HASH = process.env.APP_PASSWORD_HASH; // bcrypt hash (ดู scripts/hash-password.js)
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-only-insecure-secret-change-me';
 const isProd = process.env.NODE_ENV === 'production';
+const ANNIVERSARY_DATE = process.env.ANNIVERSARY_DATE; // วันครบรอบ ให้คุณแฟนเข้าแบบดูอย่างเดียว (เช่น 2024-02-14 หรือ 02-14)
 
 if (!APP_USERNAME || !APP_PASSWORD_HASH) {
   console.warn('⚠️  ยังไม่ได้ตั้ง APP_USERNAME / APP_PASSWORD_HASH — จะล็อกอินไม่ได้จนกว่าจะตั้งค่า (ดู .env.example)');
 }
 if (!process.env.SESSION_SECRET) {
   console.warn('⚠️  ยังไม่ได้ตั้ง SESSION_SECRET — กรุณาตั้งค่าก่อนใช้งานจริง');
+}
+if (!ANNIVERSARY_DATE) {
+  console.warn('⚠️  ยังไม่ได้ตั้ง ANNIVERSARY_DATE — โหมดเข้าสู่ระบบสำหรับคุณแฟนจะยังใช้ไม่ได้');
 }
 
 // โฟลเดอร์ไฟล์ชั่วคราวของ multer (สร้างให้แน่ใจว่ามีอยู่)
@@ -80,10 +84,24 @@ app.post('/login', loginLimiter, (req, res) => {
   const passOk = bcrypt.compareSync(String(password || ''), APP_PASSWORD_HASH);
 
   if (userOk && passOk) {
-    req.session.user = { username };
+    req.session.user = { username, role: 'owner' };
     return res.json({ success: true });
   }
   return res.status(401).json({ error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
+});
+
+// เข้าสู่ระบบสำหรับคุณแฟน: ใส่ "วันครบรอบ" ถูกต้องก็เข้าได้ (สิทธิ์ดูอย่างเดียว)
+app.post('/login-partner', loginLimiter, (req, res) => {
+  if (!ANNIVERSARY_DATE) {
+    return res.status(500).json({ error: 'ระบบยังไม่ได้ตั้งค่าวันครบรอบ' });
+  }
+  const target = monthDay(ANNIVERSARY_DATE);
+  const given = monthDay((req.body || {}).date);
+  if (target && given && target === given) {
+    req.session.user = { username: 'แฟน', role: 'partner' };
+    return res.json({ success: true });
+  }
+  return res.status(401).json({ error: 'วันครบรอบไม่ถูกต้อง' });
 });
 
 app.post('/logout', (req, res) => {
@@ -119,9 +137,9 @@ app.use((req, res, next) => {
 // ----- ไฟล์ static (ทุกอย่างใต้บรรทัดนี้ต้องล็อกอินแล้ว ยกเว้น whitelist ด้านบน) -----
 app.use(express.static('public'));
 
-// ----- ข้อมูลผู้ใช้ปัจจุบัน (ให้ frontend แสดงชื่อ/ปุ่มออกจากระบบ) -----
+// ----- ข้อมูลผู้ใช้ปัจจุบัน (ให้ frontend แสดงชื่อ + ซ่อนปุ่มตามสิทธิ์) -----
 app.get('/api/me', (req, res) => {
-  res.json({ username: req.session.user.username });
+  res.json({ username: req.session.user.username, role: req.session.user.role });
 });
 
 // ----- helper: แปลงชื่อที่ผู้ใช้ตั้ง เป็น slug ปลอดภัยสำหรับ public_id -----
@@ -136,6 +154,22 @@ function makeSlug(name) {
     .slice(0, 60) || 'image';
 }
 
+// ----- helper: ดึงเดือน-วัน จากสตริงวันที่ (รองรับ YYYY-MM-DD หรือ MM-DD) เทียบเฉพาะเดือน+วัน -----
+function monthDay(str) {
+  const parts = String(str || '').split(/\D+/).filter(Boolean).map(Number);
+  if (parts.length < 2) return null;
+  const mo = parts.length >= 3 ? parts[1] : parts[0];
+  const day = parts.length >= 3 ? parts[2] : parts[1];
+  if (!mo || !day || mo < 1 || mo > 12 || day < 1 || day > 31) return null;
+  return mo + '-' + day;
+}
+
+// ----- middleware: เฉพาะเจ้าของ (owner) เท่านั้นที่อัปโหลด/ลบได้ คุณแฟนดูอย่างเดียว -----
+function requireOwner(req, res, next) {
+  if (req.session.user && req.session.user.role === 'owner') return next();
+  return res.status(403).json({ error: 'เฉพาะเจ้าของเท่านั้นที่ทำรายการนี้ได้' });
+}
+
 // ----- helper: แปลง resource ของ Cloudinary → object ที่ frontend ใช้ -----
 function toImage(resource, captionOverride) {
   const publicId = resource.public_id;
@@ -145,16 +179,21 @@ function toImage(resource, captionOverride) {
     resource.context?.caption ||
     publicId.split('/').pop();
 
+  // รูปย่อหลายขนาด (เล็กลง + บีบอัดแบบ eco) เพื่อให้โหลดเร็ว
+  const thumbUrl = (w) =>
+    cloudinary.url(publicId, {
+      secure: true,
+      transformation: [{ width: w, crop: 'limit', quality: 'auto:eco', fetch_format: 'auto' }],
+    });
+
   return {
     public_id: publicId,
     display_name: caption,
     width: resource.width,
     height: resource.height,
-    // รูปย่อ (เร็ว) สำหรับโชว์ในแกลเลอรี
-    thumb: cloudinary.url(publicId, {
-      secure: true,
-      transformation: [{ width: 600, crop: 'limit', quality: 'auto', fetch_format: 'auto' }],
-    }),
+    created_at: resource.created_at, // เวลาที่อัปโหลด (สำหรับ timeline)
+    thumb: thumbUrl(480),
+    srcset: [320, 480, 768].map((w) => `${thumbUrl(w)} ${w}w`).join(', '),
     // รูปเต็มสำหรับเปิดดู
     full: resource.secure_url || cloudinary.url(publicId, { secure: true }),
     // ลิงก์บังคับดาวน์โหลด พร้อมตั้งชื่อไฟล์ตามชื่อที่ตั้ง
@@ -166,7 +205,7 @@ function toImage(resource, captionOverride) {
 }
 
 // อัปโหลดรูป (ต้องล็อกอินแล้ว — ผ่านด่านตรวจด้านบน)
-app.post('/upload', upload.single('image'), async (req, res) => {
+app.post('/upload', requireOwner, upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'ไม่มีไฟล์อัปโหลด' });
 
   const filePath = req.file.path;
@@ -210,7 +249,7 @@ app.get('/images', async (req, res) => {
 });
 
 // ลบรูป (ต้องล็อกอินแล้ว) — รับ public_id ตรง ๆ จาก frontend
-app.delete('/delete', async (req, res) => {
+app.delete('/delete', requireOwner, async (req, res) => {
   const { public_id } = req.body || {};
   if (!public_id) return res.status(400).json({ error: 'Missing public_id' });
 

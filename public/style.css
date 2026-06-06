@@ -83,6 +83,11 @@ li:hover,
   transform: scale(1.12) rotate(-4deg);
 }
 
+li.active {
+  background: var(--pink-deep);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.55);
+}
+
 a i { font-size: 20px; }
 
 /* ---------- Tooltip ---------- */
@@ -244,8 +249,11 @@ a i { font-size: 20px; }
   height: auto;
   display: block;
   border-radius: var(--radius);
-  transition: transform 0.4s ease;
+  opacity: 0;
+  transition: transform 0.4s ease, opacity 0.45s ease;
 }
+
+.pic img.loaded { opacity: 1; }
 
 .pic:hover img { transform: scale(1.06); }
 
@@ -414,6 +422,95 @@ a i { font-size: 20px; }
 }
 
 .close:hover { color: var(--pink-deep); }
+
+/* ---------- Timeline (เส้นเวลาแนวตั้ง) ---------- */
+.timeline-box { width: 100%; padding: 24px 26px 50px; }
+
+.timeline {
+  position: relative;
+  max-width: 920px;
+  margin: 0 auto;
+  padding-left: 30px;
+  border-left: 3px solid var(--pink-soft);
+}
+
+.tl-group { position: relative; margin-bottom: 30px; }
+
+.tl-date {
+  position: relative;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--pink-deep);
+  margin-bottom: 14px;
+}
+
+.tl-dot {
+  position: absolute;
+  left: -38px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--pink-deep);
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 3px var(--pink-soft);
+}
+
+.tl-items { display: flex; flex-wrap: wrap; gap: 12px; }
+
+.tl-item {
+  position: relative;
+  width: 130px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+  text-decoration: none;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.tl-item:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+
+.tl-item img {
+  width: 130px;
+  height: 130px;
+  object-fit: cover;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+
+.tl-item img.loaded { opacity: 1; }
+
+.tl-time {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(70, 30, 40, 0.6);
+  color: #fff;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.tl-name {
+  display: block;
+  padding: 7px 9px;
+  font-size: 12px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 480px) {
+  .timeline-box { padding: 16px 12px 40px; }
+  .timeline { padding-left: 22px; }
+  .tl-dot { left: -30px; }
+  .tl-item, .tl-item img { width: 46vw; }
+  .tl-item img { height: 46vw; }
+}
 
 /* ---------- Responsive ---------- */
 @media (max-width: 768px) {

@@ -6,6 +6,10 @@
   <title>Bunwadee Gallery 🌸</title>
   <link rel="icon" href="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/2764.svg" type="image/svg+xml" />
 
+  <!-- เชื่อมต่อ Cloudinary ล่วงหน้าเพื่อให้รูปโหลดเร็วขึ้น -->
+  <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
+  <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+
   <link rel="stylesheet" href="style.css" />
 
   <!-- icon -->
@@ -19,7 +23,7 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
-  <!-- Upload Modal -->
+  <!-- Upload Modal (เฉพาะเจ้าของ) -->
   <div id="uploadModal" class="modal">
     <div class="modal-content">
       <span class="close" id="closeModalBtn">&times;</span>
@@ -36,8 +40,9 @@
     <!-- Navbar -->
     <div class="navbar">
       <ul>
-        <li class="tooltip"><a href="/"><i class="bi bi-house-heart-fill"></i><span class="tooltip-text">หน้าหลัก</span></a></li>
-        <li class="tooltip">
+        <li class="tooltip active" id="navHome"><a href="javascript:void(0)"><i class="bi bi-house-heart-fill"></i><span class="tooltip-text">หน้าหลัก</span></a></li>
+        <li class="tooltip" id="navTimeline"><a href="javascript:void(0)"><i class="bi bi-film"></i><span class="tooltip-text">ไทม์ไลน์</span></a></li>
+        <li class="tooltip" id="navAdd">
           <a href="javascript:void(0)" id="openModalBtn">
             <i class="bi bi-plus-square"></i>
             <span class="tooltip-text">เพิ่มรูป</span>
@@ -68,21 +73,33 @@
         </div>
       </div>
 
-      <!-- Gallery -->
+      <!-- Gallery (grid) -->
       <div class="gallery-box">
         <div class="gallery"></div>
+      </div>
+
+      <!-- Timeline (เส้นเวลาแนวตั้ง) -->
+      <div class="timeline-box" hidden>
+        <div class="timeline-wrap"></div>
       </div>
     </div>
   </div>
 
   <script>
     const galleryEl = document.querySelector('.gallery');
+    const galleryBox = document.querySelector('.gallery-box');
+    const timelineBox = document.querySelector('.timeline-box');
+    const timelineEl = document.querySelector('.timeline-wrap');
     const searchInput = document.querySelector('.search-box');
     const uploadModal = document.getElementById('uploadModal');
     const uploadForm = document.getElementById('uploadForm');
     const submitBtn = uploadForm.querySelector('button[type="submit"]');
 
-    let allImages = []; // โหลดรูปครั้งเดียว เก็บไว้ค้นหา client-side
+    let allImages = [];        // โหลดรูปครั้งเดียว ใช้ค้นหา/สลับวิว
+    let currentRole = 'owner'; // owner | partner
+    let currentView = 'grid';  // grid | timeline
+
+    const GRID_SIZES = '(max-width:480px) 100vw, (max-width:768px) 48vw, 23vw';
 
     // ---------- helpers ----------
     function escapeHtml(s) {
@@ -91,50 +108,113 @@
       ));
     }
 
-    function showState(html) {
-      galleryEl.innerHTML = `<div class="gallery-state">${html}</div>`;
+    function showState(container, html) {
+      container.innerHTML = `<div class="gallery-state">${html}</div>`;
     }
 
-    // ---------- render ----------
+    // ค่อย ๆ โผล่รูปเมื่อโหลดเสร็จ (ปลอดภัย: ถ้าโหลดเสร็จแล้ว/ผิดพลาด ก็แสดงทันที)
+    function wireFadeIn(container) {
+      container.querySelectorAll('img').forEach((img) => {
+        if (img.complete) img.classList.add('loaded');
+        else {
+          img.addEventListener('load', () => img.classList.add('loaded'), { once: true });
+          img.addEventListener('error', () => img.classList.add('loaded'), { once: true });
+        }
+      });
+    }
+
+    // ---------- render: grid ----------
     function renderGallery(list) {
       if (!list.length) {
-        showState(
-          `<div class="empty-emoji">🌸</div><p>${searchInput.value ? 'ไม่พบรูปที่ค้นหา' : 'ยังไม่มีรูปในแกลเลอรี'}</p>`
-        );
+        showState(galleryEl, `<div class="empty-emoji">🌸</div><p>${searchInput.value ? 'ไม่พบรูปที่ค้นหา' : 'ยังไม่มีรูปในแกลเลอรี'}</p>`);
         return;
       }
       const frag = document.createDocumentFragment();
       list.forEach((file) => {
         const name = escapeHtml(file.display_name);
         const ratio = file.width && file.height ? `style="aspect-ratio:${file.width}/${file.height}"` : '';
+        const delBtn = currentRole === 'owner'
+          ? `<button type="button" class="btn btn-danger" data-id="${escapeHtml(file.public_id)}"><i class="bi bi-trash"></i> ลบ</button>`
+          : '';
         const pic = document.createElement('div');
         pic.className = 'pic';
         pic.innerHTML = `
-          <img src="${file.thumb}" alt="${name}" loading="lazy" decoding="async" ${ratio}>
+          <img src="${file.thumb}" srcset="${file.srcset || ''}" sizes="${GRID_SIZES}" alt="${name}" loading="lazy" decoding="async" ${ratio}>
           <div class="overlay">
             <div class="pic-name">${name}</div>
             <div class="overlay-actions">
               <a href="${file.download}" class="btn btn-download"><i class="bi bi-download"></i> โหลด</a>
-              <button type="button" class="btn btn-danger" data-id="${escapeHtml(file.public_id)}"><i class="bi bi-trash"></i> ลบ</button>
+              ${delBtn}
             </div>
           </div>`;
         frag.appendChild(pic);
       });
       galleryEl.innerHTML = '';
       galleryEl.appendChild(frag);
+      wireFadeIn(galleryEl);
     }
 
+    // ---------- render: timeline (เส้นเวลาแนวตั้ง) ----------
+    function renderTimeline(list) {
+      if (!list.length) {
+        showState(timelineEl, `<div class="empty-emoji">🎞️</div><p>${searchInput.value ? 'ไม่พบรูปที่ค้นหา' : 'ยังไม่มีรูปในแกลเลอรี'}</p>`);
+        return;
+      }
+      const sorted = [...list].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+      const groups = [];
+      const map = new Map();
+      sorted.forEach((f) => {
+        const d = f.created_at ? new Date(f.created_at) : null;
+        // ใช้วันที่ตามเวลาท้องถิ่น (ให้ตรงกับป้ายวันที่ที่แสดง)
+        const key = d ? `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}` : 'unknown';
+        if (!map.has(key)) { const g = { date: d, items: [] }; map.set(key, g); groups.push(g); }
+        map.get(key).items.push(f);
+      });
+
+      const fmtDate = (d) => d ? d.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }) : 'ไม่ทราบวันที่';
+      const fmtTime = (d) => d ? d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '';
+
+      let html = '<div class="timeline">';
+      groups.forEach((g) => {
+        html += `<div class="tl-group"><div class="tl-date"><span class="tl-dot"></span>${fmtDate(g.date)}</div><div class="tl-items">`;
+        g.items.forEach((f) => {
+          const name = escapeHtml(f.display_name);
+          const d = f.created_at ? new Date(f.created_at) : null;
+          html += `<a class="tl-item" href="${f.full}" target="_blank" rel="noopener" title="${name}">
+            <img src="${f.thumb}" srcset="${f.srcset || ''}" sizes="130px" alt="${name}" loading="lazy" decoding="async">
+            <span class="tl-time">${fmtTime(d)}</span>
+            <span class="tl-name">${name}</span>
+          </a>`;
+        });
+        html += `</div></div>`;
+      });
+      html += '</div>';
+      timelineEl.innerHTML = html;
+      wireFadeIn(timelineEl);
+    }
+
+    // ---------- search + view ----------
     function applySearch() {
       const kw = searchInput.value.trim().toLowerCase();
-      const list = kw
-        ? allImages.filter((f) => (f.display_name || '').toLowerCase().includes(kw))
-        : allImages;
-      renderGallery(list);
+      const list = kw ? allImages.filter((f) => (f.display_name || '').toLowerCase().includes(kw)) : allImages;
+      if (currentView === 'grid') renderGallery(list);
+      else renderTimeline(list);
     }
+
+    function showView(view) {
+      currentView = view;
+      galleryBox.hidden = view !== 'grid';
+      timelineBox.hidden = view !== 'timeline';
+      document.getElementById('navHome').classList.toggle('active', view === 'grid');
+      document.getElementById('navTimeline').classList.toggle('active', view === 'timeline');
+      applySearch();
+    }
+
+    searchInput.addEventListener('input', applySearch);
 
     // ---------- load images ----------
     async function loadImages() {
-      showState('<div class="spinner"></div><p>กำลังโหลดรูป...</p>');
+      showState(currentView === 'grid' ? galleryEl : timelineEl, '<div class="spinner"></div><p>กำลังโหลดรูป...</p>');
       try {
         const res = await fetch('/images');
         if (res.status === 401) return (window.location.href = '/login.html');
@@ -144,11 +224,11 @@
         applySearch();
       } catch (err) {
         console.error(err);
-        showState('<div class="empty-emoji">😿</div><p>โหลดรูปไม่สำเร็จ</p>');
+        showState(currentView === 'grid' ? galleryEl : timelineEl, '<div class="empty-emoji">😿</div><p>โหลดรูปไม่สำเร็จ</p>');
       }
     }
 
-    // ---------- delete (ลบ) ----------
+    // ---------- delete (เฉพาะเจ้าของ) ----------
     async function deleteImage(publicId) {
       const confirm = await Swal.fire({
         title: 'ลบรูปนี้?',
@@ -193,9 +273,6 @@
       }
     });
 
-    // ---------- search ----------
-    searchInput.addEventListener('input', applySearch);
-
     // ---------- modal ----------
     function openModal() { uploadModal.classList.add('show'); }
     function closeModal() { uploadModal.classList.remove('show'); }
@@ -222,7 +299,7 @@
 
         if (res.ok && data.success) {
           uploadForm.reset();
-          allImages.unshift(data); // เพิ่มรูปใหม่ทันที ไม่ต้องโหลดใหม่ทั้งหมด
+          allImages.unshift(data);
           applySearch();
           Swal.fire({ icon: 'success', title: 'อัปโหลดเสร็จแล้ว!', timer: 1300, showConfirmButton: false });
         } else {
@@ -244,6 +321,10 @@
     }
     uploadForm.addEventListener('submit', handleUpload);
 
+    // ---------- nav: สลับวิว ----------
+    document.getElementById('navHome').addEventListener('click', () => showView('grid'));
+    document.getElementById('navTimeline').addEventListener('click', () => showView('timeline'));
+
     // ---------- logout ----------
     document.getElementById('logoutBtn').addEventListener('click', async () => {
       const confirm = await Swal.fire({
@@ -260,21 +341,26 @@
       window.location.href = '/login.html';
     });
 
-    // ---------- who am I (โชว์ชื่อ/อักษรย่อในโปรไฟล์) ----------
+    // ---------- who am I (โชว์ชื่อ + ซ่อนปุ่มตามสิทธิ์) ----------
     async function loadMe() {
       try {
         const res = await fetch('/api/me');
         if (!res.ok) return;
         const me = await res.json();
+        currentRole = me.role || 'owner';
         const name = (me.username || '').trim();
         document.querySelector('.profile p').textContent = (name.charAt(0) || '?').toUpperCase();
         document.querySelector('.profile-name').textContent = name || 'ผู้ใช้';
+        // คุณแฟน = ดูอย่างเดียว → ซ่อนปุ่มเพิ่มรูป
+        if (currentRole !== 'owner') {
+          document.getElementById('navAdd').hidden = true;
+        }
       } catch (_) {}
     }
 
     // ---------- init ----------
-    window.addEventListener('DOMContentLoaded', () => {
-      loadMe();
+    window.addEventListener('DOMContentLoaded', async () => {
+      await loadMe(); // รู้สิทธิ์ก่อน เพื่อ render ปุ่มลบให้ถูก
       loadImages();
     });
   </script>
