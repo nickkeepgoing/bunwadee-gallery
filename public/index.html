@@ -1,277 +1,282 @@
-<!DOCTYPE html> 
-<html lang="en">  
-<head>  
-  <meta charset="UTF-8" />  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>  
-  <title>Bunwadee</title>  
-  <link rel="icon" href="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/2764.svg" type="image/svg+xml">
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bunwadee Gallery 🌸</title>
+  <link rel="icon" href="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/2764.svg" type="image/svg+xml" />
 
-  <link rel="stylesheet" href="style.css"> 
+  <link rel="stylesheet" href="style.css" />
 
-  <!-- icon --> 
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"> 
-  
-  <!-- font --> 
-  <link rel="preconnect" href="https://fonts.googleapis.com">  
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>  
-  <link href="https://fonts.googleapis.com/css2?family=Winky+Sans:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">  
+  <!-- icon -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+  <!-- font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
   <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-</head>  
-<body> 
-  <!-- Upload Modal --> 
-  <div id="uploadModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); justify-content:center; align-items:center;">  
-    <div class="modal-content" style="background:white; padding:20px; border-radius:10px; position:relative; width:300px;">  
-      <span class="close" onclick="closeModal()" style="position:absolute; top:10px; right:10px; cursor:pointer;">&times;</span>  
-      <h3>อัปโหลดรูปภาพ</h3>  
-      <form id="uploadForm" enctype="multipart/form-data">  
-        <input type="text" name="filename" placeholder="ตั้งชื่อไฟล์" required class="name-input"/>  
-        <input type="file" name="image" accept=".png,.jpg,.jpeg,.gif,.heic" required>  
-        <input type="password" name="password" placeholder="รหัสผ่าน" required class="name-input"/>  
-        <button type="submit">อัพโหลด</button>  
-      </form>  
-    </div>  
-  </div> 
+</head>
+<body>
+  <!-- Upload Modal -->
+  <div id="uploadModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="closeModalBtn">&times;</span>
+      <h3>🌸 อัปโหลดรูปภาพ</h3>
+      <form id="uploadForm" enctype="multipart/form-data">
+        <input type="text" name="filename" placeholder="ตั้งชื่อรูป (เช่น เที่ยวทะเล)" required class="name-input" />
+        <input type="file" name="image" accept=".png,.jpg,.jpeg,.gif,.heic,.webp" required />
+        <button type="submit">อัพโหลด</button>
+      </form>
+    </div>
+  </div>
 
-  <div class="container">  
-    <!-- Navbar -->  
-    <div class="navbar">  
-      <ul>  
-        <li class="tooltip"><a href="#"><i class="bi bi-house-heart-fill"></i><span class="tooltip-text">หน้าหลัก</span></a></li>  
-        <li class="tooltip">  
-          <a href="javascript:void(0)" onclick="openModal()">  
-            <i class="bi bi-plus-square"></i>  
-            <span class="tooltip-text">สร้าง</span>  
-          </a>  
-        </li>  
-        <li class="tooltip"><a href="#"><i class="bi bi-bell"></i><span class="tooltip-text">อัปเดต</span></a></li>  
-        <li class="tooltip"><a href="message.html"><i class="bi bi-chat-dots"></i><span class="tooltip-text">ข้อความ</span></a></li>  
-      </ul>  
-      <div class="settings tooltip">  
-        <a href="#" class="setbut"><i class="bi bi-gear"></i><span class="tooltip-text">การตั้งค่า</span></a>  
-      </div>  
-    </div> 
+  <div class="container">
+    <!-- Navbar -->
+    <div class="navbar">
+      <ul>
+        <li class="tooltip"><a href="/"><i class="bi bi-house-heart-fill"></i><span class="tooltip-text">หน้าหลัก</span></a></li>
+        <li class="tooltip">
+          <a href="javascript:void(0)" id="openModalBtn">
+            <i class="bi bi-plus-square"></i>
+            <span class="tooltip-text">เพิ่มรูป</span>
+          </a>
+        </li>
+        <li class="tooltip"><a href="message.html"><i class="bi bi-chat-heart"></i><span class="tooltip-text">ข้อความ</span></a></li>
+      </ul>
+      <div class="settings">
+        <a href="javascript:void(0)" class="setbut tooltip" id="logoutBtn"><i class="bi bi-box-arrow-right"></i><span class="tooltip-text">ออกจากระบบ</span></a>
+      </div>
+    </div>
 
-    <div class="content">  
-      <!-- Header -->  
-      <div class="header">  
-        <div class="search">  
-          <div class="search-container">  
-            <span class="search-icon"><i class="bi bi-search-heart"></i></span>  
-            <input type="text" class="search-box" placeholder="Search">  
-          </div>  
-        </div>  
-        <div class="profile-box">  
-          <div class="profile"><p>N</p></div>  
-        </div>  
-      </div>  
+    <div class="content">
+      <!-- Header -->
+      <div class="header">
+        <div class="app-title"><span>🌸</span> Bunwadee Gallery</div>
+        <div class="search">
+          <div class="search-container">
+            <span class="search-icon"><i class="bi bi-search-heart"></i></span>
+            <input type="text" class="search-box" placeholder="ค้นหาชื่อรูป..." />
+          </div>
+        </div>
+        <div class="profile-box">
+          <div class="profile tooltip">
+            <p>N</p>
+            <span class="tooltip-text profile-name">ผู้ใช้</span>
+          </div>
+        </div>
+      </div>
 
-      <!-- Gallery -->  
-      <div class="gallery-box">  
-        <div class="gallery">  
-          <!-- Dynamic images will be inserted here -->  
-        </div>  
-      </div>  
-    </div>  
+      <!-- Gallery -->
+      <div class="gallery-box">
+        <div class="gallery"></div>
+      </div>
+    </div>
+  </div>
 
-    <div class="footer"></div>
-  </div> 
+  <script>
+    const galleryEl = document.querySelector('.gallery');
+    const searchInput = document.querySelector('.search-box');
+    const uploadModal = document.getElementById('uploadModal');
+    const uploadForm = document.getElementById('uploadForm');
+    const submitBtn = uploadForm.querySelector('button[type="submit"]');
 
-<script> 
-// โหลดภาพ
-async function loadImages() {
-  const res = await fetch('/images'); 
-  const files = await res.json();
-  const gallery = document.querySelector('.gallery');
-  gallery.innerHTML = '';
+    let allImages = []; // โหลดรูปครั้งเดียว เก็บไว้ค้นหา client-side
 
-  files.forEach(file => {
-    const picDiv = document.createElement('div');
-    picDiv.className = 'pic';
-    picDiv.setAttribute('data-name', file.filename.toLowerCase());  
+    // ---------- helpers ----------
+    function escapeHtml(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+      ));
+    }
 
-    picDiv.innerHTML = `  
-      <img src="${file.url}" alt="${file.filename}" loading="lazy">  
-      <div class="overlay">  
-        <button class="btn btn-danger" onclick="deleteImage('${file.filename}')">ลบ</button>  
-        <a href="${file.url}" download class="btn">ดาวน์โหลด</a>  
-      </div>  
-    `;  
-    gallery.appendChild(picDiv);
-  });
-}
+    function showState(html) {
+      galleryEl.innerHTML = `<div class="gallery-state">${html}</div>`;
+    }
 
-// เรียกตอนโหลดหน้า
-window.addEventListener('DOMContentLoaded', loadImages);
+    // ---------- render ----------
+    function renderGallery(list) {
+      if (!list.length) {
+        showState(
+          `<div class="empty-emoji">🌸</div><p>${searchInput.value ? 'ไม่พบรูปที่ค้นหา' : 'ยังไม่มีรูปในแกลเลอรี'}</p>`
+        );
+        return;
+      }
+      const frag = document.createDocumentFragment();
+      list.forEach((file) => {
+        const name = escapeHtml(file.display_name);
+        const ratio = file.width && file.height ? `style="aspect-ratio:${file.width}/${file.height}"` : '';
+        const pic = document.createElement('div');
+        pic.className = 'pic';
+        pic.innerHTML = `
+          <img src="${file.thumb}" alt="${name}" loading="lazy" decoding="async" ${ratio}>
+          <div class="overlay">
+            <div class="pic-name">${name}</div>
+            <div class="overlay-actions">
+              <a href="${file.download}" class="btn btn-download"><i class="bi bi-download"></i> โหลด</a>
+              <button type="button" class="btn btn-danger" data-id="${escapeHtml(file.public_id)}"><i class="bi bi-trash"></i> ลบ</button>
+            </div>
+          </div>`;
+        frag.appendChild(pic);
+      });
+      galleryEl.innerHTML = '';
+      galleryEl.appendChild(frag);
+    }
 
-// เปิด modal
-function openModal() {
-  document.getElementById('uploadModal').style.display = 'block';
-}
+    function applySearch() {
+      const kw = searchInput.value.trim().toLowerCase();
+      const list = kw
+        ? allImages.filter((f) => (f.display_name || '').toLowerCase().includes(kw))
+        : allImages;
+      renderGallery(list);
+    }
 
-// ปิด modal
-function closeModal() {
-  document.getElementById('uploadModal').style.display = 'none';
-}
+    // ---------- load images ----------
+    async function loadImages() {
+      showState('<div class="spinner"></div><p>กำลังโหลดรูป...</p>');
+      try {
+        const res = await fetch('/images');
+        if (res.status === 401) return (window.location.href = '/login.html');
+        if (!res.ok) throw new Error('โหลดรูปไม่สำเร็จ (' + res.status + ')');
+        const data = await res.json();
+        allImages = Array.isArray(data) ? data : [];
+        applySearch();
+      } catch (err) {
+        console.error(err);
+        showState('<div class="empty-emoji">😿</div><p>โหลดรูปไม่สำเร็จ</p>');
+      }
+    }
 
-// ปิด modal เมื่อคลิกนอกกล่อง
-window.addEventListener('click', (event) => {
-  const modal = document.getElementById('uploadModal');
-  if (event.target === modal) modal.style.display = 'none';
-});
+    // ---------- delete (ลบ) ----------
+    async function deleteImage(publicId) {
+      const confirm = await Swal.fire({
+        title: 'ลบรูปนี้?',
+        text: 'ลบแล้วเอากลับมาไม่ได้นะ',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'ลบเลย',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#ff6e6e',
+        cancelButtonColor: '#c9b3b3',
+      });
+      if (!confirm.isConfirmed) return;
 
-// Search
-const searchInput = document.querySelector('.search-box');
-searchInput.addEventListener('input', async () => {
-  const keyword = searchInput.value.toLowerCase();
-  const res = await fetch('/images');
-  const files = await res.json();
-  const gallery = document.querySelector('.gallery');
-  gallery.innerHTML = '';
+      try {
+        const res = await fetch('/delete', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ public_id: publicId }),
+        });
+        if (res.status === 401) return (window.location.href = '/login.html');
+        let data = {};
+        try { data = await res.json(); } catch (_) {}
 
-  files
-    .filter(file => file.filename.toLowerCase().includes(keyword))
-    .forEach(file => {
-      const picDiv = document.createElement('div');
-      picDiv.className = 'pic';
-      picDiv.setAttribute('data-name', file.filename.toLowerCase());
+        if (res.ok && data.success) {
+          allImages = allImages.filter((f) => f.public_id !== publicId);
+          applySearch();
+          Swal.fire({ icon: 'success', title: 'ลบสำเร็จ!', timer: 1200, showConfirmButton: false });
+        } else {
+          Swal.fire({ icon: 'error', title: 'ลบไม่สำเร็จ', text: data.error || 'เกิดข้อผิดพลาด', confirmButtonColor: '#eb8585' });
+        }
+      } catch (err) {
+        Swal.fire({ icon: 'warning', title: 'มีปัญหา', text: 'ลบไม่สำเร็จ ลองใหม่', confirmButtonColor: '#eb8585' });
+      }
+    }
 
-      picDiv.innerHTML = `  
-          <img src="${file.url}" alt="${file.filename}">  
-          <div class="overlay"> 
-            <p width="50%" style="color:white">${file.filename}</p>
-            <button class="btn btn-danger" onclick="deleteImage('${file.filename}')">ลบ</button>  
-            <a href="${file.url}" download class="btn">ดาวน์โหลด</a>  
-          </div>  
-        `;  
-      gallery.appendChild(picDiv);  
+    // กดปุ่มลบ (event delegation รองรับชื่อที่มีอักขระพิเศษ)
+    galleryEl.addEventListener('click', (e) => {
+      const delBtn = e.target.closest('.btn-danger');
+      if (delBtn) {
+        e.preventDefault();
+        deleteImage(delBtn.dataset.id);
+      }
     });
-});
 
-// ลบภาพ
-async function deleteImage(url) {
-  const password = prompt('ใส่รหัสผ่านเพื่อลบรูป:');
-  if (!password) return;
+    // ---------- search ----------
+    searchInput.addEventListener('input', applySearch);
 
-  try {
-    const parts = url.split('/');
-    const filename = parts[parts.length - 1]; 
-    let public_id = filename.replace(/.[^/.]+$/, ''); 
+    // ---------- modal ----------
+    function openModal() { uploadModal.classList.add('show'); }
+    function closeModal() { uploadModal.classList.remove('show'); }
 
-    const folderIndex = parts.findIndex(p => p === 'bunwadee');  
-    if (folderIndex >= 0) {  
-      const pathParts = parts.slice(folderIndex);  
-      public_id = pathParts.join('/').replace(/\.[^/.]+$/, '');  
-    }  
+    document.getElementById('openModalBtn').addEventListener('click', openModal);
+    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+    window.addEventListener('click', (e) => { if (e.target === uploadModal) closeModal(); });
+    window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
-    const res = await fetch('/delete', {  
-      method: 'DELETE',  
-      headers: { 'Content-Type': 'application/json' },  
-      body: JSON.stringify({ public_id, password })  
-    });  
+    // ---------- upload ----------
+    async function handleUpload(e) {
+      e.preventDefault();
+      const formData = new FormData(uploadForm);
+      closeModal();
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'กำลังอัปโหลด...';
+      Swal.fire({ title: 'กำลังอัปโหลด...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-    const data = await res.json();  
+      try {
+        const res = await fetch('/upload', { method: 'POST', body: formData });
+        if (res.status === 401) return (window.location.href = '/login.html');
+        let data = {};
+        try { data = await res.json(); } catch (_) {}
 
-    if (data.success) {  
-      Swal.fire({
-        title: '✅ ลบสำเร็จ!',
-        text: 'ไฟล์ถูกลบเรียบร้อย',
-        icon: 'success',
-        confirmButtonText: 'ตกลง'
-      }).then(() => loadImages());
-    } else {  
-      Swal.fire({
-        title: '❌ ลบไม่สำเร็จ',
-        text: data.error || 'เกิดข้อผิดพลาด',
-        icon: 'error',
-        confirmButtonText: 'ลองอีกครั้ง'
-      });
+        if (res.ok && data.success) {
+          uploadForm.reset();
+          allImages.unshift(data); // เพิ่มรูปใหม่ทันที ไม่ต้องโหลดใหม่ทั้งหมด
+          applySearch();
+          Swal.fire({ icon: 'success', title: 'อัปโหลดเสร็จแล้ว!', timer: 1300, showConfirmButton: false });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'อัปโหลดไม่สำเร็จ',
+            text: data.error || 'เกิดข้อผิดพลาด',
+            confirmButtonText: 'ลองอีกครั้ง',
+            confirmButtonColor: '#eb8585',
+          }).then(openModal);
+        }
+      } catch (err) {
+        console.error('Upload error:', err);
+        Swal.fire({ icon: 'warning', title: 'มีปัญหา', text: 'อัปโหลดไม่สำเร็จ กรุณาลองใหม่', confirmButtonColor: '#eb8585' }).then(openModal);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'อัพโหลด';
+      }
     }
+    uploadForm.addEventListener('submit', handleUpload);
 
-  } catch (err) {
-    Swal.fire({
-      title: '⚠️ มีปัญหา',
-      text: 'เกิดข้อผิดพลาดในการลบ',
-      icon: 'warning',
-      confirmButtonText: 'ตกลง'
+    // ---------- logout ----------
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      const confirm = await Swal.fire({
+        title: 'ออกจากระบบ?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'ออกจากระบบ',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#ff6e6e',
+        cancelButtonColor: '#c9b3b3',
+      });
+      if (!confirm.isConfirmed) return;
+      try { await fetch('/logout', { method: 'POST' }); } catch (_) {}
+      window.location.href = '/login.html';
     });
-  }
-}
 
-const uploadForm = document.getElementById('uploadForm');
-const submitBtn = uploadForm.querySelector('button[type="submit"]');
-
-async function handleUpload(e) {
-  e.preventDefault();
-
-  // สร้าง FormData จากฟอร์มก่อนเลย (สำคัญ)
-  const formData = new FormData(uploadForm);
-
-  // (ถ้าต้องการ debug ชั่วคราว) ตรวจว่ามี field อะไรส่งไปบ้าง
-  // console.log('--- FormData entries ---');
-  // for (const [k, v] of formData.entries()) {
-  //   console.log(k, v instanceof File ? v.name : v);
-  // }
-
-  // ปิด modal ทันที (ตามที่ต้องการ) แต่ยังไม่ reset ฟอร์ม
-  closeModal();
-
-  // ป้องกันกดซ้ำ
-  if (submitBtn) {
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'กำลังอัปโหลด...';
-  }
-
-  try {
-    const res = await fetch('/upload', { method: 'POST', body: formData });
-
-    // พยายามแปลงเป็น JSON (บางครั้ง backend อาจไม่ตอบ JSON)
-    let data = {};
-    try { data = await res.json(); } catch (err) { /* non-json response */ }
-
-    if (res.ok && data.success) {
-      // สำเร็จ: รีเซ็ตฟอร์มได้ปลอดภัย
-      uploadForm.reset();
-
-      Swal.fire({
-        title: '✅ อัปโหลดเสร็จแล้ว!',
-        text: 'ไฟล์ถูกอัปโหลดเรียบร้อย',
-        icon: 'success',
-        confirmButtonText: 'ตกลง'
-      }).then(() => {
-        loadImages();
-      });
-    } else {
-      // ไม่สำเร็จ: เปิด modal กลับ เพื่อให้ user แก้รหัสผ่าน/ลองใหม่
-      Swal.fire({
-        title: '❌ อัปโหลดไม่สำเร็จ',
-        text: data.error || 'รหัสผ่านไม่ถูกต้องหรือเกิดข้อผิดพลาด',
-        icon: 'error',
-        confirmButtonText: 'ลองอีกครั้ง'
-      }).then(() => {
-        openModal();
-      });
+    // ---------- who am I (โชว์ชื่อ/อักษรย่อในโปรไฟล์) ----------
+    async function loadMe() {
+      try {
+        const res = await fetch('/api/me');
+        if (!res.ok) return;
+        const me = await res.json();
+        const name = (me.username || '').trim();
+        document.querySelector('.profile p').textContent = (name.charAt(0) || '?').toUpperCase();
+        document.querySelector('.profile-name').textContent = name || 'ผู้ใช้';
+      } catch (_) {}
     }
 
-  } catch (err) {
-    console.error('Upload error:', err);
-    Swal.fire({
-      title: '⚠️ มีปัญหา',
-      text: 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่',
-      icon: 'warning',
-      confirmButtonText: 'ตกลง'
-    }).then(() => openModal());
-  } finally {
-    if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'อัพโหลด';
-    }
-  }
-}
-
-uploadForm.addEventListener('submit', handleUpload);
-
-</script>
-
+    // ---------- init ----------
+    window.addEventListener('DOMContentLoaded', () => {
+      loadMe();
+      loadImages();
+    });
+  </script>
+</body>
 </html>
