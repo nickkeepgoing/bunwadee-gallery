@@ -423,6 +423,37 @@ a i { font-size: 20px; }
 
 .close:hover { color: var(--pink-deep); }
 
+/* ---------- Album filter chips ---------- */
+.album-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 26px;
+}
+
+.album-bar:empty { display: none; }
+
+.chip {
+  border: 1.5px solid var(--pink-soft);
+  background: #fff;
+  color: var(--pink-deep);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13.5px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.chip:hover { background: var(--pink-bg-soft); }
+
+.chip.active {
+  background: linear-gradient(135deg, var(--pink-soft), var(--pink-deep));
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(255, 110, 110, 0.35);
+}
+
 /* ---------- Timeline (เส้นเวลาแนวตั้ง) ---------- */
 .timeline-box { width: 100%; padding: 24px 26px 50px; }
 
@@ -529,6 +560,11 @@ a i { font-size: 20px; }
 
   ul { flex-direction: row; gap: 12px; }
   .settings { flex-direction: row; gap: 10px; }
+
+  /* ซ่อน tooltip บนมือถือ: กัน tooltip ยื่นเกิน navbar (ปุ่ม logout) และทับปุ่มข้างๆ */
+  .tooltip-text { display: none !important; }
+
+  .album-bar { padding: 0 14px; }
 
   li, .setbut { height: 40px; width: 40px; font-size: 16px; }
 

@@ -30,6 +30,8 @@
       <h3>🌸 อัปโหลดรูปภาพ</h3>
       <form id="uploadForm" enctype="multipart/form-data">
         <input type="text" name="filename" placeholder="ตั้งชื่อรูป (เช่น เที่ยวทะเล)" required class="name-input" />
+        <input type="text" name="album" placeholder="อัลบั้ม (เช่น ทริปทะเล)" class="name-input" list="albumList" autocomplete="off" />
+        <datalist id="albumList"></datalist>
         <input type="file" name="image" accept=".png,.jpg,.jpeg,.gif,.heic,.webp" required />
         <button type="submit">อัพโหลด</button>
       </form>
@@ -73,6 +75,9 @@
         </div>
       </div>
 
+      <!-- Album filter -->
+      <div class="album-bar" id="albumBar"></div>
+
       <!-- Gallery (grid) -->
       <div class="gallery-box">
         <div class="gallery"></div>
@@ -98,6 +103,7 @@
     let allImages = [];        // โหลดรูปครั้งเดียว ใช้ค้นหา/สลับวิว
     let currentRole = 'owner'; // owner | partner
     let currentView = 'grid';  // grid | timeline
+    let currentAlbum = '*';    // อัลบั้มที่เลือก (* = ทั้งหมด)
 
     const GRID_SIZES = '(max-width:480px) 100vw, (max-width:768px) 48vw, 23vw';
 
@@ -196,10 +202,40 @@
     // ---------- search + view ----------
     function applySearch() {
       const kw = searchInput.value.trim().toLowerCase();
-      const list = kw ? allImages.filter((f) => (f.display_name || '').toLowerCase().includes(kw)) : allImages;
+      let list = allImages;
+      if (currentAlbum !== '*') list = list.filter((f) => (f.album || 'ทั่วไป') === currentAlbum);
+      if (kw) list = list.filter((f) => (f.display_name || '').toLowerCase().includes(kw));
       if (currentView === 'grid') renderGallery(list);
       else renderTimeline(list);
     }
+
+    // ---------- albums ----------
+    function uniqueAlbums() {
+      const set = new Set();
+      allImages.forEach((f) => { if (f.album) set.add(f.album); });
+      return [...set].sort((a, b) => a.localeCompare(b, 'th'));
+    }
+
+    function renderAlbumBar() {
+      const bar = document.getElementById('albumBar');
+      const albums = uniqueAlbums();
+      const dl = document.getElementById('albumList');
+      if (dl) dl.innerHTML = albums.map((a) => `<option value="${escapeHtml(a)}"></option>`).join('');
+      // มีอัลบั้มเดียว (หรือไม่มี) ก็ไม่ต้องโชว์ตัวกรอง
+      if (albums.length <= 1) { bar.innerHTML = ''; currentAlbum = '*'; return; }
+      if (currentAlbum !== '*' && !albums.includes(currentAlbum)) currentAlbum = '*';
+      const chip = (val, label) =>
+        `<button type="button" class="chip${currentAlbum === val ? ' active' : ''}" data-album="${escapeHtml(val)}">${escapeHtml(label)}</button>`;
+      bar.innerHTML = chip('*', 'ทั้งหมด') + albums.map((a) => chip(a, a)).join('');
+    }
+
+    document.getElementById('albumBar').addEventListener('click', (e) => {
+      const chip = e.target.closest('.chip');
+      if (!chip) return;
+      currentAlbum = chip.dataset.album;
+      document.querySelectorAll('#albumBar .chip').forEach((c) => c.classList.toggle('active', c === chip));
+      applySearch();
+    });
 
     function showView(view) {
       currentView = view;
@@ -221,6 +257,7 @@
         if (!res.ok) throw new Error('โหลดรูปไม่สำเร็จ (' + res.status + ')');
         const data = await res.json();
         allImages = Array.isArray(data) ? data : [];
+        renderAlbumBar();
         applySearch();
       } catch (err) {
         console.error(err);
@@ -254,6 +291,7 @@
 
         if (res.ok && data.success) {
           allImages = allImages.filter((f) => f.public_id !== publicId);
+          renderAlbumBar();
           applySearch();
           Swal.fire({ icon: 'success', title: 'ลบสำเร็จ!', timer: 1200, showConfirmButton: false });
         } else {
@@ -300,6 +338,7 @@
         if (res.ok && data.success) {
           uploadForm.reset();
           allImages.unshift(data);
+          renderAlbumBar();
           applySearch();
           Swal.fire({ icon: 'success', title: 'อัปโหลดเสร็จแล้ว!', timer: 1300, showConfirmButton: false });
         } else {

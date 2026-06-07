@@ -179,6 +179,11 @@ function toImage(resource, captionOverride) {
     resource.context?.caption ||
     publicId.split('/').pop();
 
+  const album =
+    resource.context?.custom?.album ||
+    resource.context?.album ||
+    'ทั่วไป';
+
   // รูปย่อหลายขนาด (เล็กลง + บีบอัดแบบ eco) เพื่อให้โหลดเร็ว
   const thumbUrl = (w) =>
     cloudinary.url(publicId, {
@@ -192,6 +197,7 @@ function toImage(resource, captionOverride) {
     width: resource.width,
     height: resource.height,
     created_at: resource.created_at, // เวลาที่อัปโหลด (สำหรับ timeline)
+    album: album,
     thumb: thumbUrl(480),
     srcset: [320, 480, 768].map((w) => `${thumbUrl(w)} ${w}w`).join(', '),
     // รูปเต็มสำหรับเปิดดู
@@ -211,18 +217,19 @@ app.post('/upload', requireOwner, upload.single('image'), async (req, res) => {
   const filePath = req.file.path;
   try {
     const niceName = String(req.body.filename || '').trim() || 'รูปภาพ';
+    const album = String(req.body.album || '').trim() || 'ทั่วไป';
     const publicId = `bunwadee/${makeSlug(niceName)}-${Date.now().toString(36)}`;
 
     const result = await cloudinary.uploader.upload(filePath, {
       resource_type: 'image',
       format: 'jpg', // แปลง HEIC → JPG
       public_id: publicId,
-      context: { caption: niceName }, // เก็บชื่อสวย ๆ ที่ผู้ใช้ตั้ง
+      context: { caption: niceName, album: album }, // เก็บชื่อ + อัลบั้มที่ผู้ใช้ตั้ง
       overwrite: false,
     });
 
     fs.unlinkSync(filePath); // ลบไฟล์ชั่วคราว
-    res.json({ success: true, ...toImage(result, niceName) });
+    res.json({ success: true, ...toImage(result, niceName), album });
   } catch (err) {
     try { fs.unlinkSync(filePath); } catch (_) {}
     console.error(err);
