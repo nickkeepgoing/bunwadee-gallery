@@ -393,6 +393,13 @@ a i { font-size: 20px; }
   background: #fff;
 }
 
+.upload-hint {
+  font-size: 12.5px;
+  color: var(--pink-deep);
+  margin: -6px 0 12px;
+  min-height: 14px;
+}
+
 .modal-content button[type="submit"] {
   width: 100%;
   padding: 12px;

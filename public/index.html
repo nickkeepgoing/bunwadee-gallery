@@ -27,12 +27,13 @@
   <div id="uploadModal" class="modal">
     <div class="modal-content">
       <span class="close" id="closeModalBtn">&times;</span>
-      <h3>🌸 อัปโหลดรูปภาพ</h3>
+      <h3>🌸 อัปโหลดเข้าอัลบั้ม</h3>
       <form id="uploadForm" enctype="multipart/form-data">
-        <input type="text" name="filename" placeholder="ตั้งชื่อรูป (เช่น เที่ยวทะเล)" required class="name-input" />
-        <input type="text" name="album" placeholder="อัลบั้ม (เช่น ทริปทะเล)" class="name-input" list="albumList" autocomplete="off" />
+        <input type="text" name="album" placeholder="อัลบั้ม (เช่น ทริปทะเล)" required class="name-input" list="albumList" autocomplete="off" />
         <datalist id="albumList"></datalist>
-        <input type="file" name="image" accept=".png,.jpg,.jpeg,.gif,.heic,.webp" required />
+        <input type="text" name="filename" placeholder="ชื่อรูป (เว้นว่างได้ — ใช้ชื่อไฟล์เดิม)" class="name-input" />
+        <input type="file" name="image" accept=".png,.jpg,.jpeg,.gif,.heic,.webp" multiple required />
+        <p class="upload-hint" id="fileCountHint"></p>
         <button type="submit">อัพโหลด</button>
       </form>
     </div>
@@ -99,6 +100,7 @@
     const uploadModal = document.getElementById('uploadModal');
     const uploadForm = document.getElementById('uploadForm');
     const submitBtn = uploadForm.querySelector('button[type="submit"]');
+    const fileCountHint = document.getElementById('fileCountHint');
 
     let allImages = [];        // โหลดรูปครั้งเดียว ใช้ค้นหา/สลับวิว
     let currentRole = 'owner'; // owner | partner
@@ -317,17 +319,24 @@
 
     document.getElementById('openModalBtn').addEventListener('click', openModal);
     document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+
+    // แสดงจำนวนรูปที่เลือก
+    uploadForm.image.addEventListener('change', () => {
+      const n = uploadForm.image.files.length;
+      fileCountHint.textContent = n ? `เลือก ${n} รูป` : '';
+    });
     window.addEventListener('click', (e) => { if (e.target === uploadModal) closeModal(); });
     window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
     // ---------- upload ----------
     async function handleUpload(e) {
       e.preventDefault();
+      const fileCount = uploadForm.image.files.length;
       const formData = new FormData(uploadForm);
       closeModal();
       submitBtn.disabled = true;
       submitBtn.textContent = 'กำลังอัปโหลด...';
-      Swal.fire({ title: 'กำลังอัปโหลด...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      Swal.fire({ title: `กำลังอัปโหลด ${fileCount} รูป...`, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
       try {
         const res = await fetch('/upload', { method: 'POST', body: formData });
@@ -337,10 +346,13 @@
 
         if (res.ok && data.success) {
           uploadForm.reset();
-          allImages.unshift(data);
+          if (fileCountHint) fileCountHint.textContent = '';
+          const imgs = Array.isArray(data.images) ? data.images : (data.public_id ? [data] : []);
+          imgs.forEach((img) => allImages.unshift(img));
           renderAlbumBar();
           applySearch();
-          Swal.fire({ icon: 'success', title: 'อัปโหลดเสร็จแล้ว!', timer: 1300, showConfirmButton: false });
+          const failedNote = data.failed ? ` (ไม่สำเร็จ ${data.failed} รูป)` : '';
+          Swal.fire({ icon: 'success', title: `อัปโหลด ${imgs.length} รูปเสร็จแล้ว!${failedNote}`, timer: 1500, showConfirmButton: false });
         } else {
           Swal.fire({
             icon: 'error',

@@ -211,30 +211,45 @@ function toImage(resource, captionOverride) {
 }
 
 // อัปโหลดรูป (ต้องล็อกอินแล้ว — ผ่านด่านตรวจด้านบน)
-app.post('/upload', requireOwner, upload.single('image'), async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'ไม่มีไฟล์อัปโหลด' });
+app.post('/upload', requireOwner, upload.array('image', 30), async (req, res) => {
+  const files = req.files || [];
+  if (!files.length) return res.status(400).json({ error: 'ไม่มีไฟล์อัปโหลด' });
 
-  const filePath = req.file.path;
-  try {
-    const niceName = String(req.body.filename || '').trim() || 'รูปภาพ';
-    const album = String(req.body.album || '').trim() || 'ทั่วไป';
-    const publicId = `bunwadee/${makeSlug(niceName)}-${Date.now().toString(36)}`;
+  const album = String(req.body.album || '').trim() || 'ทั่วไป';
+  const baseName = String(req.body.filename || '').trim(); // ชื่อ (ไม่บังคับ) ใช้เป็นชื่อฐาน
+  const uploaded = [];
+  const errors = [];
 
-    const result = await cloudinary.uploader.upload(filePath, {
-      resource_type: 'image',
-      format: 'jpg', // แปลง HEIC → JPG
-      public_id: publicId,
-      context: { caption: niceName, album: album }, // เก็บชื่อ + อัลบั้มที่ผู้ใช้ตั้ง
-      overwrite: false,
-    });
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    try {
+      // ชื่อรูป: ถ้าใส่ชื่อฐานมา → "ชื่อฐาน 1, 2, ..." (หรือชื่อเดียวถ้ารูปเดียว) ไม่ใส่ → ใช้ชื่อไฟล์เดิม
+      const original = String(file.originalname || '').replace(/\.[^/.]+$/, '').trim();
+      const niceName = baseName
+        ? (files.length > 1 ? `${baseName} ${i + 1}` : baseName)
+        : (original || 'รูปภาพ');
+      const publicId = `bunwadee/${makeSlug(niceName)}-${Date.now().toString(36)}-${i}`;
 
-    fs.unlinkSync(filePath); // ลบไฟล์ชั่วคราว
-    res.json({ success: true, ...toImage(result, niceName), album });
-  } catch (err) {
-    try { fs.unlinkSync(filePath); } catch (_) {}
-    console.error(err);
-    res.status(500).json({ error: 'Upload failed: ' + err.message });
+      const result = await cloudinary.uploader.upload(file.path, {
+        resource_type: 'image',
+        format: 'jpg', // แปลง HEIC → JPG
+        public_id: publicId,
+        context: { caption: niceName, album: album }, // เก็บชื่อ + อัลบั้ม
+        overwrite: false,
+      });
+      uploaded.push({ ...toImage(result, niceName), album });
+    } catch (err) {
+      console.error('Upload error:', err);
+      errors.push((file.originalname || 'ไฟล์') + ': ' + err.message);
+    } finally {
+      try { fs.unlinkSync(file.path); } catch (_) {} // ลบไฟล์ชั่วคราว
+    }
   }
+
+  if (!uploaded.length) {
+    return res.status(500).json({ error: 'อัปโหลดไม่สำเร็จ: ' + (errors[0] || '') });
+  }
+  res.json({ success: true, images: uploaded, failed: errors.length });
 });
 
 // ดึงรูปทั้งหมดจาก Cloudinary
